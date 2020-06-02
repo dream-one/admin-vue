@@ -41,3 +41,5 @@ export const GetMenu = p => get('/User/GetMenu', p)
 export const GetSchoolSelect = p => get('/Options/GetSchool', p)
 
 export const GetNotifyByEcharts = p => get('/Echarts/GetNotify',p)
+
+export const EditTeacher = p =>post('/Teacher/EditTeacherAsync',p)

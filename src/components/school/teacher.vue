@@ -17,17 +17,17 @@
           </div>
         </el-col>
         <el-col :span="3">
-          <el-button type="primary" @click="dialogFormVisible = true">添加人员</el-button>
+          <el-button type="primary" @click="editFlag = false;dialogFormVisible = true">添加人员</el-button>
         </el-col>
         <el-col :span="8">
-             <el-button type="success" @click="editTeacher">
-        编辑
+          <el-button type="success" @click="editTeacher">
+            编辑
             <i class="el-icon-edit"></i>
           </el-button>
           <el-button type="danger" @click="deleteTeacher">
             删除
             <i class="el-icon-delete-solid"></i>
-          </el-button> 
+          </el-button>
           <el-button type="warning" @click="$router.go(0)">
             刷新
             <i class="el-icon-refresh"></i>
@@ -51,14 +51,14 @@
         <el-table-column align="center" prop="Image" label="抓图">
           <template slot-scope="scope">
             <el-tooltip
-              :disabled="!scope.row.SnapshotContent ? true : false"
+              :disabled="!scope.row.Image ? true : false"
               popper-class="pop"
               effect="light"
               :open-delay="500"
               placement="top"
             >
-              <img :src="scope.row.SnapshotContent" width="50" height="50" class="head_pic" />
-              <img :src="scope.row.SnapshotContent" slot="content" width="150" height="150" />
+              <img :src="scope.row.Image" width="50" height="50" class="head_pic" />
+              <img :src="scope.row.Image" slot="content" width="150" height="150" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -77,7 +77,12 @@
     </el-card>
 
     <!-- 弹出层  添加 -->
-    <el-dialog width="30%" center title="填写人员信息" :visible.sync="dialogFormVisible">
+    <el-dialog
+      width="30%"
+      center
+      :title="editFlag==false ? '填写人员信息':'编辑人员信息'"
+      :visible.sync="dialogFormVisible"
+    >
       <el-form
         ref="rulesForm"
         :rules="rules"
@@ -135,7 +140,12 @@
 </template>
 
 <script>
-import { AddTeacher, DeletTeacher, GetTeacher } from '../../api/api.js'
+import {
+  AddTeacher,
+  DeletTeacher,
+  GetTeacher,
+  EditTeacher
+} from '../../api/api.js'
 export default {
   data() {
     return {
@@ -143,6 +153,7 @@ export default {
       teacherList: [], //人员列表
       currentPage: 1, //当前页
       pagesize: 12, //页码数量
+      editFlag: false, //是否打开编辑面板
       dialogFormVisible: false, //是否显示弹出层
       form: {
         Name: '',
@@ -250,61 +261,87 @@ export default {
         this.teacherList = res.Data.result
       })
     },
-    editTeacher(){
-    if(this.multipleSelection.length>1){
-      
-    }
+    editTeacher() {
+      if (this.multipleSelection.length !== 1) {
+        return this.$message({
+          showClose: true,
+          message: '选择且只能选择一项进行编辑',
+          type: 'waring'
+        })
+      }
+
+      this.editFlag = true
+      this.dialogFormVisible = true
+      // this.form = this.multipleSelection[0]
+      this.form = Object.assign({}, this.multipleSelection[0], {
+        EquipmentNum: this.multipleSelection[0].DeviceSerial
+      })
     },
     add() {
       //点击确定
       this.$refs['rulesForm'].validate(ValidityState => {
         if (ValidityState) {
-          if (!this.form.imageContent) {
-            return this.$message({
-              showClose: true,
-              message: '请拍照',
-              type: 'waring'
+          if (this.editFlag == false) {
+            if (!this.form.imageContent) {
+              return this.$message({
+                showClose: true,
+                message: '请拍照',
+                type: 'waring'
+              })
+            }
+            const loading = this.$loading({
+              lock: true,
+              text: 'Loading',
+              spinner: 'el-icon-loading',
+              background: 'rgba(0, 0, 0, 0.7)'
             })
-          }
-          const loading = this.$loading({
-            lock: true,
-            text: 'Loading',
-            spinner: 'el-icon-loading',
-            background: 'rgba(0, 0, 0, 0.7)'
-          })
-          this.form.SchoolID = this.$store.state.organizationID
-          AddTeacher(this.form)
-            .then(res => {
-              if (res.data.Code == 200) {
-                let obj = {
-                  Name: this.form.Name,
-                  PhoneNum: this.form.PhoneNum
+            this.form.SchoolID = this.$store.state.organizationID
+
+            AddTeacher(this.form)
+              .then(res => {
+                if (res.data.Code == 200) {
+                  let obj = {
+                    Name: this.form.Name,
+                    PhoneNum: this.form.PhoneNum
+                  }
+                  this.teacherList.unshift(obj)
+                  this.$message({
+                    showClose: true,
+                    message: '添加成功',
+                    type: 'success'
+                  })
+                  this.dialogFormVisible = false
+                  Object.keys(this.form).forEach(key => (this.form[key] = '')) //清空表单
+                } else {
+                  this.$message({
+                    showClose: true,
+                    message: '错误' + res.data.ErrMessage,
+                    type: 'warn'
+                  })
                 }
-                this.teacherList.unshift(obj)
+                loading.close()
+              })
+              .catch(err => {
                 this.$message({
                   showClose: true,
-                  message: '添加成功',
-                  type: 'success'
-                })
-                this.dialogFormVisible = false
-                Object.keys(this.form).forEach(key => (this.form[key] = '')) //清空表单
-              } else {
-                this.$message({
-                  showClose: true,
-                  message: '错误' + res.data.ErrMessage,
+                  message: '错误' + err,
                   type: 'warn'
                 })
-              }
-              loading.close()
-            })
-            .catch(err => {
-              this.$message({
-                showClose: true,
-                message: '错误' + err,
-                type: 'warn'
+                loading.close()
               })
-              loading.close()
+          } else {
+            EditTeacher(this.form).then(res => {
+              console.log(res)
+              if (res.data.Code == 200) {
+                this.$message.success('修改成功')
+                //修改成功
+                this.searchList = []
+                this.initTeacherData(this.pagesize, this.currentPage - 1)
+                this.editFlag = false
+                this.dialogFormVisible = false
+              }
             })
+          }
         } else {
           return false
         }
