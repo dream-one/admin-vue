@@ -17,7 +17,7 @@
           </div>
         </el-col>
         <el-col :span="3">
-          <el-button type="primary" @click="editFlag = false;dialogFormVisible = true">添加人员</el-button>
+          <el-button type="primary" @click="addTeacher">添加人员</el-button>
         </el-col>
         <el-col :span="8">
           <el-button type="success" @click="editTeacher">
@@ -82,6 +82,7 @@
       center
       :title="editFlag==false ? '填写人员信息':'编辑人员信息'"
       :visible.sync="dialogFormVisible"
+      destroy-on-close
     >
       <el-form
         ref="rulesForm"
@@ -205,13 +206,14 @@ export default {
     // 拍照
     photograph() {
       let ctx = this.$refs['canvas'].getContext('2d')
+      this.clearCanvas()
       // 把当前视频帧内容渲染到canvas上
       ctx.drawImage(this.$refs['video'], 0, 0, 440, 300)
       // 转base64格式、图片格式转换、图片质量压缩
       let imageContent = this.$refs['canvas'].toDataURL('image/jpeg', 0.7) // 由字节转换为KB 判断大小
 
-      // let str = imageContent.replace('data:image/jpeg;base64,', '')
-      this.form.imageContent = imageContent
+      let str = imageContent.replace('data:image/jpeg;base64,', '')
+      this.form.imageContent = str
       // let strLength = str.length
       // let fileLength = parseInt(strLength - (strLength / 8) * 2) // 图片尺寸  用于判断
       // let size = (fileLength / 1024).toFixed(2)
@@ -261,6 +263,23 @@ export default {
         this.teacherList = res.Data.result
       })
     },
+    clearCanvas() {
+      // let ctx = this.$refs['canvas'].getContext('2d')
+      var c = this.$refs['canvas']
+      var cxt = c.getContext('2d')
+      cxt.clearRect(0, 0, c.width, c.height)
+    },
+    addTeacher() {
+      this.form = {
+        Name: '',
+        PhoneNum: '',
+        imageContent: '',
+        EquipmentNum: ''
+      }
+      this.editFlag = false
+      this.dialogFormVisible = true
+      //  this.clearCanvas()
+    },
     editTeacher() {
       if (this.multipleSelection.length !== 1) {
         return this.$message({
@@ -272,7 +291,15 @@ export default {
 
       this.editFlag = true
       this.dialogFormVisible = true
-      // this.form = this.multipleSelection[0]
+
+      setTimeout(() => {
+        var image = new Image(150, 150)
+        image.src = this.multipleSelection[0].Image
+        let ctx = this.$refs['canvas'].getContext('2d')
+        ctx.drawImage(image, 0, 0, 370, 480)
+      }, 100)
+
+      // ctx.drawImage(image, 0, 0)
       this.form = Object.assign({}, this.multipleSelection[0], {
         EquipmentNum: this.multipleSelection[0].DeviceSerial
       })
@@ -302,7 +329,8 @@ export default {
                 if (res.data.Code == 200) {
                   let obj = {
                     Name: this.form.Name,
-                    PhoneNum: this.form.PhoneNum
+                    PhoneNum: this.form.PhoneNum,
+                    Image:'data:image/jpeg;base64,'+this.form.imageContent
                   }
                   this.teacherList.unshift(obj)
                   this.$message({
@@ -331,7 +359,6 @@ export default {
               })
           } else {
             EditTeacher(this.form).then(res => {
-              console.log(res)
               if (res.data.Code == 200) {
                 this.$message.success('修改成功')
                 //修改成功
@@ -375,7 +402,6 @@ export default {
           })
           DeletTeacher(that.multipleSelection).then(res => {
             //多次循环，在显示界面的列表中删除
-
             if (res.data.Data == true) {
               that.multipleSelection.forEach((element, index, array) => {
                 for (let i = 0; i < that.teacherList.length; i++) {

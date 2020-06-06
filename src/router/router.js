@@ -1,4 +1,3 @@
-
 import home from '../components/home.vue'
 import index from '../components/home/index.vue'
 import aboutMe from '../components/me/aboutMe.vue'
@@ -8,6 +7,7 @@ import teacher from '../components/school/teacher.vue'
 import student from '../components/school/student.vue'
 import classAndGrade from '../components/school/classAndGrade.vue'
 import huizong from '../components/quanxianye/quanxianye'
+import attendances from '../components/school/attendances.vue'
 export const L1Router = [
   {
     path: '/home',
@@ -18,7 +18,8 @@ export const L1Router = [
       { path: '/equiment', component: equipment },
       { path: '/teacherMan', component: teacher },
       { path: '/studentMan', component: student },
-      { path: '/classGradeMan', component: classAndGrade }
+      { path: '/classGradeMan', component: classAndGrade },
+      { path: '/attendances', component: attendances }
     ]
   }
 ]
