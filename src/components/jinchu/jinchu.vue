@@ -4,7 +4,7 @@
     <el-card>
       <!-- 搜索框 -->
       <el-row type="flex" align="middle" :gutter="2">
-        <el-col :xs="5" :sm="4" :md="4" :lg="2" :xl="1" :span="1">
+        <el-col :xs="5" :sm="4" :md="4" :lg="2" :xl="2" :span="3">
           <span>姓名：</span>
         </el-col>
         <el-col :xs="5" :sm="4" :md="4" :lg="3" :xl="4" :span="4">
@@ -77,7 +77,7 @@
         <el-pagination
           background
           layout="prev, pager, next, sizes, total, jumper"
-          :page-sizes="[12]"
+          :page-sizes="[5,10,20]"
           :page-size="pagesize"
           :total="listLength"
           @current-change="handleCurrentChange"
@@ -127,6 +127,7 @@ export default {
     handleSizeChange(psize) {
       //更改显示行数
       this.pagesize = psize
+      this.initData()
     },
     filterHandler(value, row, column) {
       return row.InOutType == value

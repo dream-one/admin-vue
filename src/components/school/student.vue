@@ -17,9 +17,13 @@
           </div>
         </el-col>
         <el-col :span="2">
-          <el-button type="primary" @click="dialogFormVisible = true">添加学生</el-button>
+          <el-button type="primary" @click="form={},editFlag=false,dialogFormVisible = true">添加学生</el-button>
         </el-col>
         <el-col :span="8">
+          <el-button type="success" @click="editStudent">
+            编辑
+            <i class="el-icon-edit"></i>
+          </el-button>
           <el-button type="danger" @click="deleteStudent">
             删除
             <i class="el-icon-delete-solid"></i>
@@ -51,11 +55,17 @@
         <el-table-column align="center" prop="StudentID" label="学号"></el-table-column>
         <el-table-column align="center" prop="caller" label="联系人"></el-table-column>
         <el-table-column align="center" prop="PhoneNum" label="联系电话"></el-table-column>
-         <el-table-column align="center" prop="Image" label="抓图">
+        <el-table-column align="center" prop="Image" label="抓图">
           <template slot-scope="scope">
-             <el-tooltip  :disabled="!scope.row.SnapshotContent ? true : false" popper-class="pop" effect="light" :open-delay="500" placement="top">
-              <img :src="scope.row.SnapshotContent" width="50" height="50" class="head_pic" />
-              <img :src="scope.row.SnapshotContent" slot="content" width="150" height="150" />
+            <el-tooltip
+              :disabled="!scope.row.Image ? true : false"
+              popper-class="pop"
+              effect="light"
+              :open-delay="500"
+              placement="top"
+            >
+              <img :src="scope.row.Image" width="50" height="50" class="head_pic" />
+              <img :src="scope.row.Image" slot="content" width="150" height="150" />
             </el-tooltip>
           </template>
         </el-table-column>
@@ -74,7 +84,13 @@
     </el-card>
 
     <!-- 弹出层  添加学生 -->
-    <el-dialog width="40%" center title="填写学生信息" :visible.sync="dialogFormVisible">
+    <el-dialog
+      width="40%"
+      center
+      :title="editFlag==false ? '填写学生信息':'编辑学生信息'"
+      :visible.sync="dialogFormVisible"
+      destroy-on-close
+    >
       <el-form
         ref="rulesForm"
         :rules="rules"
@@ -185,11 +201,13 @@ import {
   GetClassName,
   AddStudent,
   GetStudent,
-  DelStudentBatch
+  DelStudentBatch,
+  EditStudent
 } from '../../api/api'
 export default {
   data() {
     return {
+      editFlag: false,
       searchInput: '', //搜索框
       studentList: [], //学生列表
       studentListLength: 0,
@@ -308,6 +326,9 @@ export default {
   watch: {
     'form.gradeValue': function(val, oldval) {
       //监听年级选择的变化，从后台获取属于该年级的班级列表
+      if (val == '' || val == null) {
+        return
+      }
       let GradeName = val
       GetClassName({ GradeName })
         .then(res => {
@@ -334,6 +355,35 @@ export default {
     }
   },
   methods: {
+    editStudent() {
+      //点击编辑学生按钮
+      if (this.multipleSelection.length !== 1) {
+        return this.$message({
+          showClose: true,
+          message: '选择且只能选择一项进行编辑',
+          type: 'waring'
+        })
+      }
+
+      this.editFlag = true
+      this.dialogFormVisible = true
+
+      //处理canvas图形
+      setTimeout(() => {
+        var image = new Image(150, 150)
+        image.src = this.multipleSelection[0].Image
+        let ctx = this.$refs['canvas'].getContext('2d')
+        ctx.drawImage(image, 0, 0, 370, 480)
+      }, 100)
+
+      // ctx.drawImage(image, 0, 0)
+      this.form = Object.assign({}, this.multipleSelection[0], {
+        EquipmentNum: this.multipleSelection[0].DeviceSerial,
+        classValue: this.multipleSelection[0].ClassName,
+        gradeValue: this.multipleSelection[0].GradeName,
+        imageContent: this.multipleSelection[0].Image.split(',')[1]
+      })
+    },
     // 调用摄像头
     callCamera() {
       // H5调用电脑摄像头API
@@ -354,7 +404,9 @@ export default {
     // 拍照
     photograph() {
       let ctx = this.$refs['canvas'].getContext('2d')
+      this.clearCanvas()
       // 把当前视频帧内容渲染到canvas上
+
       ctx.drawImage(this.$refs['video'], 0, 0, 440, 300)
       // 转base64格式、图片格式转换、图片质量压缩
       let imageContent = this.$refs['canvas'].toDataURL('image/jpeg', 0.7) // 由字节转换为KB 判断大小
@@ -366,6 +418,12 @@ export default {
       let fileLength = parseInt(strLength - (strLength / 8) * 2) // 图片尺寸  用于判断
       let size = (fileLength / 1024).toFixed(2)
       console.log(size) // 上传拍照信息  调用接口上传图片 .........
+    },
+    clearCanvas() {
+      // let ctx = this.$refs['canvas'].getContext('2d')
+      var c = this.$refs['canvas']
+      var cxt = c.getContext('2d')
+      cxt.clearRect(0, 0, c.width, c.height)
     },
     // 关闭摄像头
     closeCamera() {
@@ -383,15 +441,6 @@ export default {
         return false
       } else {
         return true
-      }
-    },
-    edit() {
-      if (this.multipleSelection.length > 0) {
-        return this.$message({
-          showClose: true,
-          message: '不能同时编辑多个学生',
-          type: 'warning'
-        })
       }
     },
     deleteStudent() {
@@ -421,7 +470,6 @@ export default {
             if (res.data.Data == true) {
               that.multipleSelection.forEach((element, index, array) => {
                 for (let i = 0; i < that.studentList.length; i++) {
-               
                   if (element.Id == that.studentList[i].Id) {
                     this.studentList.splice(i, 1)
                     break
@@ -475,56 +523,79 @@ export default {
       //点击确定
       this.$refs['rulesForm'].validate(ValidityState => {
         if (ValidityState) {
-          if (!this.form.imageContent) {
-            return this.$message({
-              showClose: true,
-              message: '请拍照',
-              type: 'waring'
+          if (this.editFlag == false) {
+            if (!this.form.imageContent) {
+              return this.$message({
+                showClose: true,
+                message: '请拍照',
+                type: 'waring'
+              })
+            }
+            const loading = this.$loading({
+              lock: true,
+              text: 'Loading',
+              spinner: 'el-icon-loading',
+              background: 'rgba(0, 0, 0, 0.7)'
             })
-          }
-          const loading = this.$loading({
-            lock: true,
-            text: 'Loading',
-            spinner: 'el-icon-loading',
-            background: 'rgba(0, 0, 0, 0.7)'
-          })
-          AddStudent(this.form)
-            .then(res => {
- 
-              if (res.data.Code == 200) {
-                let obj = {
-                  Name: this.form.Name,
-                  ClassName: this.form.classValue,
-                  GradeName: this.form.gradeValue,
-                  StudentID: this.form.StudentID,
-                
-                }
-                this.studentList.unshift(obj)
+            AddStudent(this.form)
+              .then(res => {
+                if (res.data.Code == 200) {
+                  let obj = {
+                    Name: this.form.Name,
+                    ClassName: this.form.classValue,
+                    GradeName: this.form.gradeValue,
+                    StudentID: this.form.StudentID,
+                    Image: this.form.imageContent
+                  }
+                  this.studentList.unshift(obj)
 
+                  this.$message({
+                    showClose: true,
+                    message: '添加成功',
+                    type: 'success'
+                  })
+                  this.dialogFormVisible = false
+                  Object.keys(this.form).forEach(key => (this.form[key] = '')) //清空表单
+                } else {
+                  this.$message({
+                    showClose: true,
+                    message: '错误' + res.data.ErrMessage,
+                    type: 'warn'
+                  })
+                }
+                loading.close()
+              })
+              .catch(err => {
                 this.$message({
                   showClose: true,
-                  message: '添加成功',
-                  type: 'success'
-                })
-                this.dialogFormVisible = false
-                Object.keys(this.form).forEach(key => (this.form[key] = '')) //清空表单
-              } else {
-                this.$message({
-                  showClose: true,
-                  message: '错误' + res.data.ErrMessage,
+                  message: '错误' + err,
                   type: 'warn'
                 })
-              }
-              loading.close()
-            })
-            .catch(err => {
-              this.$message({
-                showClose: true,
-                message: '错误' + err,
-                type: 'warn'
+                loading.close()
               })
-              loading.close()
+          } else {
+            const loading = this.$loading({
+              lock: true,
+              text: 'Loading',
+              spinner: 'el-icon-loading',
+              background: 'rgba(0, 0, 0, 0.7)'
             })
+            EditStudent(this.form)
+              .then(res => {
+                if (res.data.Code == 200) {
+                  this.$message.success('修改成功')
+                  //修改成功
+                  this.searchList = []
+                  this.initStudentData(this.pagesize, this.currentPage - 1)
+                  this.editFlag = false
+                  this.dialogFormVisible = false
+                }
+                loading.close()
+              })
+              .catch(err => {
+                loading.close()
+              })
+          }
         } else {
           return false
         }

@@ -14,7 +14,7 @@ export const GetNotify = p => get('/GetNotify', p)
 
 export const GetEq = () => get('/Equipment/QueryEq')
 
-export const DelEq = (p) => get('/Equipment/DelEq', p)
+export const DelEq = p => get('/Equipment/DelEq', p)
 
 export const GetNotifyByName = p => get('/GetNotifyByName', p)
 
@@ -44,4 +44,6 @@ export const GetNotifyByEcharts = p => get('/Echarts/GetNotify', p)
 
 export const EditTeacher = p => post('/Teacher/EditTeacherAsync', p)
 
-export const SetTime = p => get('/Attendance/SetTimeAsync',p)
+export const SetTime = p => get('/Attendance/SetTimeAsync', p)
+
+export const EditStudent = p => post('/Student/EditStudentrAsync', p)

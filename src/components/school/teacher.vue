@@ -147,6 +147,7 @@ import {
   GetTeacher,
   EditTeacher
 } from '../../api/api.js'
+import { diff } from '../../../public/util'
 export default {
   data() {
     return {
@@ -184,6 +185,17 @@ export default {
     eqList: function() {
       return this.$store.getters.geteqOptions
     }
+  },
+  watch: {
+    // form: {
+    //   handler(val, oldVal) {
+    //     console.log(this.editFlag, this.dialogFormVisible)
+    //     if (this.editFlag == true && this.dialogFormVisible == true) {
+    //       console.log(val, oldVal)
+    //     }
+    //   },
+    //   deep: true
+    // }
   },
   methods: {
     // 调用摄像头
@@ -288,9 +300,11 @@ export default {
           type: 'waring'
         })
       }
-
-      this.editFlag = true
-      this.dialogFormVisible = true
+      // ctx.drawImage(image, 0, 0)
+      this.form = Object.assign({}, this.multipleSelection[0], {
+        EquipmentNum: this.multipleSelection[0].DeviceSerial,
+        imageContent: this.multipleSelection[0].Image.split(',')[1]
+      })
 
       setTimeout(() => {
         var image = new Image(150, 150)
@@ -298,11 +312,12 @@ export default {
         let ctx = this.$refs['canvas'].getContext('2d')
         ctx.drawImage(image, 0, 0, 370, 480)
       }, 100)
-
-      // ctx.drawImage(image, 0, 0)
-      this.form = Object.assign({}, this.multipleSelection[0], {
-        EquipmentNum: this.multipleSelection[0].DeviceSerial
-      })
+      // setTimeout(() => {
+      //   this.editFlag = true
+      //   this.dialogFormVisible = true
+      // },100)
+      this.editFlag = true
+      this.dialogFormVisible = true
     },
     add() {
       //点击确定
@@ -330,7 +345,7 @@ export default {
                   let obj = {
                     Name: this.form.Name,
                     PhoneNum: this.form.PhoneNum,
-                    Image:'data:image/jpeg;base64,'+this.form.imageContent
+                    Image: 'data:image/jpeg;base64,' + this.form.imageContent
                   }
                   this.teacherList.unshift(obj)
                   this.$message({
@@ -358,6 +373,9 @@ export default {
                 loading.close()
               })
           } else {
+            var result = diff(this.form, this.multipleSelection[0])
+            console.log(result)
+
             EditTeacher(this.form).then(res => {
               if (res.data.Code == 200) {
                 this.$message.success('修改成功')
