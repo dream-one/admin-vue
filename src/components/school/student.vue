@@ -144,6 +144,7 @@
               no-data-text="没有找到设备信息，请先添加设备"
               v-model="form.EquipmentNum"
               placeholder="选择设备序列号"
+              :disabled="editFlag==true?true:false"
             >
               <el-option
                 v-for="item in eqList"
@@ -204,6 +205,7 @@ import {
   DelStudentBatch,
   EditStudent
 } from '../../api/api'
+import { diff } from '../../../public/util'
 export default {
   data() {
     return {
@@ -334,6 +336,12 @@ export default {
         .then(res => {
           if (res.Data == null) {
             this.classList = []
+
+            return
+          }
+          if (res.Data.length == 0) {
+            this.classList = []
+            this.form.classValue = ''
             return
           }
           let arr = []
@@ -412,12 +420,12 @@ export default {
       let imageContent = this.$refs['canvas'].toDataURL('image/jpeg', 0.7) // 由字节转换为KB 判断大小
 
       let str = imageContent.replace('data:image/jpeg;base64,', '')
-      console.log(str)
+      // console.log(str)
       this.form.imageContent = str
       let strLength = str.length
       let fileLength = parseInt(strLength - (strLength / 8) * 2) // 图片尺寸  用于判断
       let size = (fileLength / 1024).toFixed(2)
-      console.log(size) // 上传拍照信息  调用接口上传图片 .........
+      // console.log(size) // 上传拍照信息  调用接口上传图片 .........
     },
     clearCanvas() {
       // let ctx = this.$refs['canvas'].getContext('2d')
@@ -574,6 +582,18 @@ export default {
                 loading.close()
               })
           } else {
+            var result = diff(this.form, this.multipleSelection[0])
+
+            if (result) {
+              this.$message({
+                showClose: true,
+                message: '未修改任何值',
+                type: 'info'
+              })
+              this.dialogFormVisible = false
+              this.editFlag = false
+              return
+            }
             const loading = this.$loading({
               lock: true,
               text: 'Loading',
@@ -589,6 +609,8 @@ export default {
                   this.initStudentData(this.pagesize, this.currentPage - 1)
                   this.editFlag = false
                   this.dialogFormVisible = false
+                } else {
+                  this.$message.error('修改失败，' + res.data.ErrMessage)
                 }
                 loading.close()
               })

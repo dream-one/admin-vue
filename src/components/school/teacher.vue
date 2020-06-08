@@ -103,6 +103,7 @@
               no-data-text="没有找到设备信息，请先添加设备"
               v-model="form.EquipmentNum"
               placeholder="选择设备序列号"
+              :disabled="editFlag==true?true:false"
             >
               <el-option
                 v-for="item in eqList"
@@ -303,7 +304,10 @@ export default {
       // ctx.drawImage(image, 0, 0)
       this.form = Object.assign({}, this.multipleSelection[0], {
         EquipmentNum: this.multipleSelection[0].DeviceSerial,
-        imageContent: this.multipleSelection[0].Image.split(',')[1]
+        imageContent:
+          this.multipleSelection[0].Image == null
+            ? ''
+            : this.multipleSelection[0].Image.split(',')[1]
       })
 
       setTimeout(() => {
@@ -374,8 +378,17 @@ export default {
               })
           } else {
             var result = diff(this.form, this.multipleSelection[0])
-            console.log(result)
 
+            if (result) {
+              this.$message({
+                showClose: true,
+                message: '未修改任何值',
+                type: 'info'
+              })
+              this.dialogFormVisible = false
+              this.editFlag = false
+              return
+            }
             EditTeacher(this.form).then(res => {
               if (res.data.Code == 200) {
                 this.$message.success('修改成功')
@@ -384,7 +397,9 @@ export default {
                 this.initTeacherData(this.pagesize, this.currentPage - 1)
                 this.editFlag = false
                 this.dialogFormVisible = false
-              }
+              }else {
+                  this.$message.error('修改失败，' + res.data.ErrMessage)
+                }
             })
           }
         } else {
