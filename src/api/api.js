@@ -42,6 +42,8 @@ export const GetSchoolSelect = p => get('/Options/GetSchool', p)
 
 export const GetNotifyByEcharts = p => get('/Echarts/GetNotify', p)
 
+export const GetAttendanceByEcharts = p =>get('/Echarts/GetAttendanceState',p)
+
 export const EditTeacher = p => post('/Teacher/EditTeacherAsync', p)
 
 export const SetTime = p => get('/Attendance/SetTimeAsync', p)
