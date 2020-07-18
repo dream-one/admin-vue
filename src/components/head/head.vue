@@ -2,13 +2,12 @@
   <el-header class="container">
     <div class="left">
       <i @click="isCollapse" :class="collapseIcon"></i>
-
     </div>
 
     <div class="right">
-      <!-- <el-dropdown placement="bottom" style="float:right" class="right">
+      <el-dropdown @command="handleCommand" placement="bottom" style="float:right" class="right">
         <span class="el-dropdown-link">
-       {{userName}}
+          {{userName}}
           <i class="el-icon-caret-bottom el-icon--right"></i>
         </span>
         <img
@@ -16,22 +15,49 @@
           alt
         />
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item icon="el-icon-s-home" @command="this.$route.replace('/1')">首页</el-dropdown-item>
-          <el-dropdown-item icon="el-icon-user-solid">个人中心</el-dropdown-item>
-          <el-dropdown-item icon="el-icon-switch-button">登出</el-dropdown-item>
+          <!-- <el-dropdown-item icon="el-icon-s-home" @command="this.$route.replace('/1')">首页</el-dropdown-item> -->
+          <el-dropdown-item icon="el-icon-edit" command="index">修改信息</el-dropdown-item>
+          <el-dropdown-item icon="el-icon-switch-button" command="Exit">登出</el-dropdown-item>
         </el-dropdown-menu>
-      </el-dropdown>-->
-      欢迎：{{userName}} 所属单位：{{organizationName}}
+      </el-dropdown>
+      <!-- 欢迎：{{userName}} 所属单位：{{organizationName}} -->
     </div>
+    <el-dialog title="账号信息" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
+      <el-form label-position="right" label-width="100px" :model="formLabelAlign">
+        <el-form-item label="用户名">
+          <el-input :disabled="true" v-model="formLabelAlign.name"></el-input>
+        </el-form-item>
+        <el-form-item label="旧密码">
+          <el-input type="password" v-model="formLabelAlign.oldPwd"></el-input>
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input type="password" v-model="formLabelAlign.newPwd"></el-input>
+        </el-form-item>
+        <el-form-item label="重复新密码">
+          <el-input type="password" v-model="formLabelAlign.newPwdRepeat"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleClose">取 消</el-button>
+        <el-button type="primary" @click="submit">提 交</el-button>
+      </span>
+    </el-dialog>
   </el-header>
 </template>
 
 <script>
 import { mapState } from 'vuex'
+import { EditUser } from '../../api/api'
 export default {
   data() {
     return {
-
+      dialogVisible: false,
+      formLabelAlign: {
+        name: '',
+        oldPwd: '',
+        newPwd: '',
+        newPwdRepeat: ''
+      }
     }
   },
   // props: ['collapseIcon', 'routePath'],
@@ -42,6 +68,45 @@ export default {
   methods: {
     isCollapse() {
       this.$emit('listenCollapse')
+    },
+    submit() {
+      if (this.formLabelAlign.newPwd !== this.formLabelAlign.newPwdRepeat) {
+        return this.$message.error('两次密码输入不一致!')
+      }
+      let { name, oldPwd, newPwd, newPwdRepeat } = this.formLabelAlign
+      if (oldPwd == '' || newPwd == '' || newPwdRepeat == '') {
+        return this.$message.error('输入框不能为空')
+      }
+      if(oldPwd==newPwd){
+        return this.$message.error('旧密码与新密码不能相同！')
+      }
+      EditUser({ userName: name, oldPwd, newPwd }).then(res => {
+        if (res.Data == '修改成功') {
+          this.$message.success('修改成功')
+        } else {
+          return this.$message.error(res.Data)
+        }
+      })
+      this.handleClose()
+    },
+    handleClose(done) {
+      this.dialogVisible = false
+      this.formLabelAlign.name = ''
+      this.formLabelAlign.oldPwd = ''
+      this.formLabelAlign.newPwd = ''
+      this.formLabelAlign.newPwdRepeat = ''
+    },
+    handleCommand(command) {
+      if (command == 'index') {
+        this.dialogVisible = true
+        this.formLabelAlign.name = this.$store.state.userName
+      }
+      if (command == 'Exit') {
+        sessionStorage.clear()
+        localStorage.clear()
+        
+        this.$router.replace('/Login')
+      }
     }
   },
   computed: mapState({
@@ -49,9 +114,7 @@ export default {
     userName: state => state.userName,
     organizationName: state => state.organizationName
   }),
-  watch: {
-
-  }
+  watch: {}
 }
 </script>
 

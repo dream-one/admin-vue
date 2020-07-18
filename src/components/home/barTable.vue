@@ -16,7 +16,8 @@ export default {
       )
       myChart.showLoading()
       GetAttendanceByEcharts({
-        organizationID: this.$store.state.organizationID
+        organizationID: this.$store.state.organizationID,
+          Level:this.$store.state.Level
       }).then(res => {
         res.Data.DateArr.forEach((element,index,Arr) => {
           Arr[index] = element + '月'

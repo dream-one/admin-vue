@@ -44,17 +44,17 @@ export default {
       flage: false,
       userToast: false,
       passwordToast: false,
-      LoginName: 'admin',
-      LoginPwd: '123456'
+      LoginName: '',
+      LoginPwd: ''
     }
   },
   mounted() {
-    this.$notify.info({
-      title: '提示',
-      message: '用户名:admin   密码:123456',
-      duration: 8000,
-      showClose: true
-    })
+    // this.$notify.info({
+    //   title: '提示',
+    //   message: '用户名:admin   密码:123456',
+    //   duration: 8000,
+    //   showClose: true
+    // })
   },
   computed: {
     onclick() {

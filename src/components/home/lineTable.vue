@@ -17,7 +17,8 @@ export default {
       )
       myChart.showLoading()
       GetNotifyByEcharts({
-        organizationID: this.$store.state.organizationID
+        organizationID: this.$store.state.organizationID,
+        Level:this.$store.state.Level
       }).then(res => {
         console.log(res)
         res.Data.DateArr.forEach((element, index, arr) => {
@@ -84,7 +85,7 @@ export default {
             {
               name: '进',
               type: 'line',
-              data: [25, 35, 45, 40, 35, 20, 10, 8],
+              data: res.Data.Out,
 
               lineStyle: {
                 color: '#f4516c'
@@ -96,7 +97,7 @@ export default {
             {
               name: '出',
               type: 'line',
-              data: [25, 10, 8, 10, 20, 20, 35, 45],
+              data: res.Data.In,
               lineStyle: {
                 color: '#55a8fd'
               },

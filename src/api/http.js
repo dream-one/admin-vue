@@ -17,8 +17,8 @@ const $axios = axios.create({
   timeout: 5000,
   // 基础url，会在请求url中自动添加前置链接
   //baseURL: 'https://www.fastmock.site/mock/8d1fba3d73489e1c38feff913a232bdc/admin'
-  baseURL: 'http://47.99.78.196:8083/api'
-  //baseURL:'http://localhost:52950/api'
+  // baseURL: 'http://47.99.78.196:8083/api'
+  baseURL:'http://localhost:52950/api'
 })
 
 //请求头设置

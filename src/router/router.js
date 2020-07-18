@@ -19,7 +19,9 @@ export const L1Router = [
       { path: '/teacherMan', component: teacher },
       { path: '/studentMan', component: student },
       { path: '/classGradeMan', component: classAndGrade },
-      { path: '/attendances', component: attendances }
+      { path: '/attendances', component: attendances },
+      { path: '/aboutMe', component: aboutMe }
+  
     ]
   }
 ]
@@ -30,7 +32,8 @@ export const L23Router = [
     component: home,
     children: [
       { path: '/home', component: index, alias: '/home' },
-      { path: '/all-notify', component: huizong }
+      { path: '/all-notify', component: huizong },
+      { path: '/aboutMe', component: aboutMe }
     ]
   }
 ]
