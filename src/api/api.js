@@ -46,8 +46,15 @@ export const GetAttendanceByEcharts = p => get('/Echarts/GetAttendanceState', p)
 
 export const EditTeacher = p => post('/Teacher/EditTeacherAsync', p)
 
-export const SetTime = p => get('/Attendance/SetTimeAsync', p)
+export const SetTime = p => get('/Attendance/SetTime', p)
 
 export const EditStudent = p => post('/Student/EditStudentrAsync', p)
 
 export const EditUser = p => get('/User/UpdatePwdAsync', p)
+
+
+export const GetTime = p => get('/Attendance/GetTime', p)
+
+
+export const DeleteTime = p => get('/Attendance/DelTime', p)
+
