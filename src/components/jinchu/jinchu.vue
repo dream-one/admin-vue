@@ -23,10 +23,17 @@
             value-format="yyyy-MM-dd HH:mm:ss"
           ></el-date-picker>
         </el-col>
-        <el-col :push="1" :span="5">
+        <el-col :offset="2" :span="3">
+          <div>设备序列号：</div>
+        </el-col>
+        <el-col :span="4">
+          <el-input clearable placeholder="请输入设备序列号" v-model="eqNum" class="input-with-select"></el-input>
+        </el-col>
+        <el-col :span="4">
           <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         </el-col>
-        <el-col :offset="6" :xs="8" :sm="10" :md="7" :lg="7" :xl="6" :span="6">
+
+        <el-col :offset="2" :xs="8" :sm="10" :md="7" :lg="7" :xl="6" :span="4">
           <el-button @click="shuaXin" type="primary">刷新</el-button>
 
           <el-button @click="exportExcel" type="primary">导出数据</el-button>
@@ -66,7 +73,13 @@
         <el-table-column align="center" prop="Temperature" label="温度"></el-table-column>
         <el-table-column align="center" prop="Image" label="抓图">
           <template slot-scope="scope">
-            <el-tooltip :disabled="!scope.row.SnapshotContent ? true : false" popper-class="pop" effect="light" :open-delay="500" placement="top">
+            <el-tooltip
+              :disabled="!scope.row.SnapshotContent ? true : false"
+              popper-class="pop"
+              effect="light"
+              :open-delay="500"
+              placement="top"
+            >
               <img :src="scope.row.SnapshotContent" width="50" height="50" class="head_pic" />
               <img :src="scope.row.SnapshotContent" slot="content" width="150" height="150" />
             </el-tooltip>
@@ -99,6 +112,7 @@ export default {
       searchList: [], //搜索出来的数据暂时先放在这,初始化的时候将其情况
       searchInput: '', //搜索框
       jinchuList: [], //设备列表
+      eqNum: '', //设备序列号
       dialogFormVisible: false, //是否显示弹出层
       currentPage: 1, //当前页
       pagesize: 12, //页码数量
@@ -144,7 +158,11 @@ export default {
           (pageIndex + 1) * pageSize
         ))
       }
-      GetNotify({ pageSize, pageIndex }).then(res => {
+      GetNotify({
+        pageSize,
+        pageIndex,
+        SchoolID: this.$store.state.organizationID
+      }).then(res => {
         if (res.Code == 200) {
           // this.$set(this.jinchuList, this.jinchuList, res.Data.result)
           this.jinchuList = res.Data.result
@@ -162,7 +180,12 @@ export default {
       // console.log(name)
       /* generate workbook object from table */
       //  .table要导出的是哪一个表格
-      var wb = XLSX.utils.table_to_book(document.querySelector('.table'))
+      let wb
+      if (this.searchList.length !== 0) {
+        console.log('ss')
+        wb = XLSX.utils.json_to_sheetJSON(this.searchList)
+      }
+
       /* get binary string as output */
       var wbout = XLSX.write(wb, {
         bookType: 'xlsx',
@@ -185,7 +208,11 @@ export default {
       this.searchList = []
       let PageIndex = this.currentPage - 1
       let PageSize = this.pagesize
-      GetNotify({ PageIndex, PageSize }).then(res => {
+      GetNotify({
+        PageIndex,
+        PageSize,
+        SchoolID: this.$store.state.organizationID
+      }).then(res => {
         if (res.Code == 200) {
           this.jinchuList = res.Data.result
           this.listLength = res.Data.count
@@ -202,7 +229,8 @@ export default {
       //搜索
       if (
         this.searchInput == '' &&
-        (this.time == null || this.time.length == 0)
+        (this.time == null || this.time.length == 0) &&
+        this.eqNum == ''
       ) {
         return this.shuaXin()
       }
@@ -219,8 +247,13 @@ export default {
         StartTime = this.time[0]
         EndTime = this.time[1]
       }
-
-      GetNotifyByName({ Name: searchInput, StartTime, EndTime })
+      console.log('ss')
+      GetNotifyByName({
+        Name: searchInput,
+        StartTime,
+        EndTime,
+        EqNum: this.eqNum
+      })
         .then(res => {
           console.log(res)
           if (res.Code == 200) {
