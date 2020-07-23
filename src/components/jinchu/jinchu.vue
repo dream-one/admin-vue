@@ -180,11 +180,8 @@ export default {
       // console.log(name)
       /* generate workbook object from table */
       //  .table要导出的是哪一个表格
-      let wb
-      if (this.searchList.length !== 0) {
-        console.log('ss')
-        wb = XLSX.utils.json_to_sheetJSON(this.searchList)
-      }
+
+      var wb = XLSX.utils.json_to_sheetJSON(this.searchList)
 
       /* get binary string as output */
       var wbout = XLSX.write(wb, {
