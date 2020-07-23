@@ -105,6 +105,7 @@
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
 import { GetNotify, GetNotifyByName } from '../../api/api.js'
+import { sheet2blob, openDownloadDialog } from './export'
 export default {
   data() {
     return {
@@ -181,24 +182,29 @@ export default {
       /* generate workbook object from table */
       //  .table要导出的是哪一个表格
 
-      var wb = XLSX.utils.json_to_sheetJSON(this.searchList)
-
-      /* get binary string as output */
-      var wbout = XLSX.write(wb, {
-        bookType: 'xlsx',
-        bookSST: true,
-        type: 'array'
-      })
-      try {
-        //  name+'.xlsx'表示导出的excel表格名字
-        FileSaver.saveAs(
-          new Blob([wbout], { type: 'application/octet-stream' }),
-          name + '.xlsx'
-        )
-      } catch (e) {
-        if (typeof console !== 'undefined') console.log(e, wbout)
+      if (this.searchList.length !== 0) {
+        var wb = XLSX.utils.json_to_sheet(this.searchList)
+        openDownloadDialog(sheet2blob(wb), `进出记录${name}.xlsx`)
+      }else{
+        
       }
-      return wbout
+
+      // /* get binary string as output */
+      // var wbout = XLSX.write(wb, {
+      //   bookType: 'xlsx',
+      //   bookSST: true,
+      //   type: 'array'
+      // })
+      // try {
+      //   //  name+'.xlsx'表示导出的excel表格名字
+      //   FileSaver.saveAs(
+      //     new Blob([wbout], { type: 'application/octet-stream' }),
+      //     name + '.xlsx'
+      //   )
+      // } catch (e) {
+      //   if (typeof console !== 'undefined') console.log(e, wbout)
+      // }
+      // return wbout
     },
     initData() {
       //初始化表格
