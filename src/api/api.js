@@ -58,3 +58,4 @@ export const GetTime = p => get('/Attendance/GetTime', p)
 
 export const DeleteTime = p => get('/Attendance/DelTime', p)
 
+export const GetAllNotify = p => get('/GetAllNotify',p)

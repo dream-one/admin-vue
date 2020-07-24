@@ -3,7 +3,43 @@
   <div>
     <el-card>
       <!-- 搜索框 -->
-      <el-row type="flex" align="middle" :gutter="2">
+      <el-form :inline="true" :model="formSearch" class="demo-form-inline">
+        <el-form-item label="姓名">
+          <el-input v-model="formSearch.searchInput" placeholder="姓名"></el-input>
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="formSearch.time"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="yyyy-MM-dd HH:mm:ss"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="设备序列号">
+          <el-input
+            clearable
+            placeholder="请输入设备序列号"
+            v-model="formSearch.eqNum"
+            class="input-with-select"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="formSearch.State" placeholder="状态">
+            <el-option label="迟到" value="迟到"></el-option>
+            <el-option label="早退" value="早退"></el-option>
+            <el-option label="正常" value="正常"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+
+          <el-button @click="exportExcel" type="primary">导出数据</el-button>
+        </el-form-item>
+      </el-form>
+      <!-- <el-row type="flex" align="middle" :gutter="2">
         <el-col :xs="5" :sm="4" :md="4" :lg="2" :xl="2" :span="3">
           <span>姓名：</span>
         </el-col>
@@ -38,7 +74,7 @@
 
           <el-button @click="exportExcel" type="primary">导出数据</el-button>
         </el-col>
-      </el-row>
+      </el-row>-->
 
       <!-- 表格 -->
       <el-table
@@ -48,7 +84,7 @@
         hide-on-single-page
         border
         :data="getList"
-        style="width: 100%"
+        style="width: 100%;margin-top:0"
         v-loading="loading"
       >
         <el-table-column align="center" prop="Id" label="id"></el-table-column>
@@ -63,13 +99,7 @@
           label="进出类型"
         ></el-table-column>
         <el-table-column align="center" prop="DeviceSerial" label="设备系列号"></el-table-column>
-        <el-table-column
-          align="center"
-          prop="State"
-          label="状态"
-          :filters="[{text:'迟到',value:'迟到'},{text:'早退',value:'早退'},{text:'正常',value:'正常'}]"
-          :filter-method="filterState"
-        ></el-table-column>
+        <el-table-column align="center" prop="State" label="状态"></el-table-column>
         <el-table-column align="center" prop="Temperature" label="温度"></el-table-column>
         <el-table-column align="center" prop="Image" label="抓图">
           <template slot-scope="scope">
@@ -104,20 +134,25 @@
 <script>
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
-import { GetNotify, GetNotifyByName } from '../../api/api.js'
+import { GetNotify, GetNotifyByName, GetAllNotify } from '../../api/api.js'
 import { sheet2blob, openDownloadDialog } from './export'
 export default {
   data() {
     return {
-      time: [],
       searchList: [], //搜索出来的数据暂时先放在这,初始化的时候将其情况
-      searchInput: '', //搜索框
       jinchuList: [], //设备列表
-      eqNum: '', //设备序列号
+
       dialogFormVisible: false, //是否显示弹出层
       currentPage: 1, //当前页
-      pagesize: 12, //页码数量
+      pagesize: 5, //页码数量
       listLength: 0,
+      formSearch: {
+        eqNum: '', //设备序列号
+        searchInput: '', //搜索框
+        time: [],
+        State: '',
+        InOutType: ''
+      },
       form: {
         eqID: '', //设备ID
         eqName: '', //系列号
@@ -152,7 +187,7 @@ export default {
     },
     setData(pageSize, pageIndex) {
       pageIndex = pageIndex - 1
-      if (this.searchList.length != 0) {
+      if (this.searchList.length !== 0) {
         //如果搜索数组里有值，就直接显示搜索数组里的值
         return (this.jinchuList = this.searchList.slice(
           pageIndex * pageSize,
@@ -185,8 +220,13 @@ export default {
       if (this.searchList.length !== 0) {
         var wb = XLSX.utils.json_to_sheet(this.searchList)
         openDownloadDialog(sheet2blob(wb), `进出记录${name}.xlsx`)
-      }else{
-        
+      } else {
+        GetAllNotify({ SchoolID: this.$store.state.organizationID }).then(
+          res => {
+            var wb = XLSX.utils.json_to_sheet(res.Data)
+            openDownloadDialog(sheet2blob(wb), `进出记录${name}.xlsx`)
+          }
+        )
       }
 
       // /* get binary string as output */
@@ -230,35 +270,34 @@ export default {
     },
     search() {
       //搜索
+      let { time, searchInput, eqNum, State } = this.formSearch
       if (
-        this.searchInput == '' &&
-        (this.time == null || this.time.length == 0) &&
-        this.eqNum == ''
+        searchInput == '' &&
+        (time == null || time.length == 0) &&
+        eqNum == ''&&this.formSearch.State==''
       ) {
         return this.shuaXin()
       }
       this.loading = true
-      let searchInput = this.searchInput
       let PageIndex = this.currentPage - 1
       let PageSize = this.pagesize
       let StartTime
       let EndTime
-      if (this.time == null) {
+      if (time == null) {
         StartTime = null
         EndTime = null
       } else {
-        StartTime = this.time[0]
-        EndTime = this.time[1]
+        StartTime = time[0]
+        EndTime = time[1]
       }
-      console.log('ss')
       GetNotifyByName({
         Name: searchInput,
         StartTime,
         EndTime,
-        EqNum: this.eqNum
+        EqNum: eqNum,
+        State
       })
         .then(res => {
-          console.log(res)
           if (res.Code == 200) {
             this.searchList = res.Data
             this.jinchuList = this.searchList.slice(0, 12)
