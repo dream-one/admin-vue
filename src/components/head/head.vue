@@ -104,8 +104,8 @@ export default {
       if (command == 'Exit') {
         sessionStorage.clear()
         localStorage.clear()
-        
-        this.$router.replace('/Login')
+        location.reload()
+        // this.$router.replace('/Login')
       }
     }
   },

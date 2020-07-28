@@ -1,10 +1,10 @@
 <template>
   <div>
     <el-card>
-      <el-row>
-        <el-col :span="6">
+      <el-form :inline="true" v-model="formSearch" class="demo-form-inline">
+        <el-form-item label="学校">
           <el-select
-          clearable 
+            clearable
             filterable
             v-if="isCity"
             style="width:300px"
@@ -20,7 +20,14 @@
               ></el-option>
             </el-option-group>
           </el-select>
-          <el-select clearable  filterable style="width:300px" v-else v-model="value" placeholder="请选择">
+          <el-select
+            clearable
+            filterable
+            style="width:300px"
+            v-else
+            v-model="value"
+            placeholder="请选择"
+          >
             <el-option
               v-for="item in options"
               :key="item.value"
@@ -28,11 +35,36 @@
               :value="item.value"
             ></el-option>
           </el-select>
-        </el-col>
-        <el-col :span="4">
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="formSearch.time"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="yyyy-MM-dd HH:mm:ss"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="设备序列号">
+          <el-input
+            clearable
+            placeholder="请输入设备序列号"
+            v-model="formSearch.eqNum"
+            class="input-with-select"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="formSearch.State" placeholder="状态">
+            <el-option label="迟到" value="迟到"></el-option>
+            <el-option label="早退" value="早退"></el-option>
+            <el-option label="正常" value="正常"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
           <el-button type="primary" @click="query">查询</el-button>
-        </el-col>
-      </el-row>
+        </el-form-item>
+      </el-form>
 
       <!-- 表格 -->
       <el-table
@@ -79,6 +111,12 @@ export default {
       pagesize: 12, //页码数量
       listLength: 0,
       options: [],
+      formSearch: {
+        eqNum: '', //设备序列号
+        time: [],
+        State: '',
+        InOutType: ''
+      },
       value: '',
       duoOptions: [],
       loading: false
@@ -94,12 +132,36 @@ export default {
   },
   methods: {
     query() {
-      if (this.value == '') return
+      let { time, eqNum, State } = this.formSearch
+      if (
+        this.value == '' &&
+        (time == null || time.length == 0) &&
+        eqNum == '' &&
+        State == ''
+      )
+        return
       this.loading = true
       let PageIndex = this.currentPage - 1
       let PageSize = this.pagesize
       let SchoolID = this.value
-      GetNotify({ PageIndex, PageSize, SchoolID }).then(res => {
+      let StartTime
+      let EndTime
+      if (time == null) {
+        StartTime = null
+        EndTime = null
+      } else {
+        StartTime = time[0]
+        EndTime = time[1]
+      }
+      GetNotify({
+        PageIndex,
+        PageSize,
+        SchoolID,
+        StartTime,
+        EndTime,
+        EqNum: eqNum,
+        State
+      }).then(res => {
         this.loading = false
         if (res.Code == 200) {
           this.listLength = res.Data.count
